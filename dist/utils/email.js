@@ -7,12 +7,15 @@ exports.sendPasswordResetEmail = exports.sendVerificationEmail = void 0;
 const nodemailer_1 = __importDefault(require("nodemailer"));
 const transporter = nodemailer_1.default.createTransport({
     host: process.env.EMAIL_HOST,
-    port: parseInt(process.env.EMAIL_PORT || '587'),
-    secure: false,
+    port: parseInt(process.env.EMAIL_PORT || '465'),
+    secure: true, // Use SSL for port 465
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS || process.env.EMAIL_PASSWORD,
     },
+    tls: {
+        rejectUnauthorized: true
+    }
 });
 const sendVerificationEmail = async (email, code) => {
     const mailOptions = {
