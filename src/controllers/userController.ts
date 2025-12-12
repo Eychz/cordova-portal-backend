@@ -61,7 +61,7 @@ export const updateProfile = async (req: Request, res: Response) => {
 export const updateUser = async (req: Request, res: Response) => {
   try {
     const targetUserId = parseInt(req.params.id);
-    const { firstName, middleName, lastName, email, role, barangay, points, profileImageUrl, isVerified, contactNumber } = req.body;
+    const { firstName, middleName, lastName, email, role, barangay, points, profileImageUrl, isVerified, contactNumber, frontIdDocumentUrl, backIdDocumentUrl, faceVerificationUrl } = req.body;
     const adminId = req.user!.userId;
     
     // Get admin info for activity log
@@ -83,6 +83,9 @@ export const updateUser = async (req: Request, res: Response) => {
     if (profileImageUrl !== undefined) updateData.profileImageUrl = profileImageUrl;
     if (isVerified !== undefined) updateData.isVerified = isVerified;
     if (contactNumber !== undefined) updateData.contactNumber = contactNumber;
+    if (frontIdDocumentUrl !== undefined) updateData.frontIdDocumentUrl = frontIdDocumentUrl;
+    if (backIdDocumentUrl !== undefined) updateData.backIdDocumentUrl = backIdDocumentUrl;
+    if (faceVerificationUrl !== undefined) updateData.faceVerificationUrl = faceVerificationUrl;
     
     // Update user
     const user = await prisma.user.update({

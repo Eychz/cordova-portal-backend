@@ -6,7 +6,7 @@ const transporter = nodemailer.createTransport({
   secure: false,
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD,
+    pass: process.env.EMAIL_PASS || process.env.EMAIL_PASSWORD,
   },
 });
 
@@ -29,7 +29,14 @@ export const sendVerificationEmail = async (email: string, code: string) => {
     `,
   };
 
-  await transporter.sendMail(mailOptions);
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    console.log('Verification email sent successfully:', info.messageId);
+    return info;
+  } catch (error) {
+    console.error('Failed to send verification email:', error);
+    throw new Error('Failed to send verification email. Please check email configuration.');
+  }
 };
 
 export const sendPasswordResetEmail = async (email: string, code: string) => {
@@ -51,5 +58,12 @@ export const sendPasswordResetEmail = async (email: string, code: string) => {
     `,
   };
 
-  await transporter.sendMail(mailOptions);
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    console.log('Password reset email sent successfully:', info.messageId);
+    return info;
+  } catch (error) {
+    console.error('Failed to send password reset email:', error);
+    throw new Error('Failed to send password reset email. Please check email configuration.');
+  }
 };

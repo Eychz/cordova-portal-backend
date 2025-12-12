@@ -62,7 +62,7 @@ exports.updateProfile = updateProfile;
 const updateUser = async (req, res) => {
     try {
         const targetUserId = parseInt(req.params.id);
-        const { firstName, middleName, lastName, email, role, barangay, points, profileImageUrl, isVerified, contactNumber } = req.body;
+        const { firstName, middleName, lastName, email, role, barangay, points, profileImageUrl, isVerified, contactNumber, frontIdDocumentUrl, backIdDocumentUrl, faceVerificationUrl } = req.body;
         const adminId = req.user.userId;
         // Get admin info for activity log
         const admin = await database_1.default.user.findUnique({
@@ -91,6 +91,12 @@ const updateUser = async (req, res) => {
             updateData.isVerified = isVerified;
         if (contactNumber !== undefined)
             updateData.contactNumber = contactNumber;
+        if (frontIdDocumentUrl !== undefined)
+            updateData.frontIdDocumentUrl = frontIdDocumentUrl;
+        if (backIdDocumentUrl !== undefined)
+            updateData.backIdDocumentUrl = backIdDocumentUrl;
+        if (faceVerificationUrl !== undefined)
+            updateData.faceVerificationUrl = faceVerificationUrl;
         // Update user
         const user = await database_1.default.user.update({
             where: { id: targetUserId },
