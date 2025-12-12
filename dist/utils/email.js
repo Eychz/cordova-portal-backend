@@ -5,8 +5,16 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.sendPasswordResetEmail = exports.sendVerificationEmail = void 0;
 const nodemailer_1 = __importDefault(require("nodemailer"));
+// Log email configuration (without sensitive data)
+console.log('Email Configuration:', {
+    host: process.env.EMAIL_HOST || 'NOT SET',
+    port: process.env.EMAIL_PORT || 'NOT SET',
+    user: process.env.EMAIL_USER || 'NOT SET',
+    from: process.env.EMAIL_FROM || 'NOT SET',
+    hasPassword: !!(process.env.EMAIL_PASS || process.env.EMAIL_PASSWORD)
+});
 const transporter = nodemailer_1.default.createTransport({
-    host: process.env.EMAIL_HOST,
+    host: process.env.EMAIL_HOST || 'smtp.gmail.com',
     port: parseInt(process.env.EMAIL_PORT || '465'),
     secure: true, // Use SSL for port 465
     auth: {
