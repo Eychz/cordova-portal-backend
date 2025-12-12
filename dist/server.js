@@ -23,8 +23,8 @@ const PORT = process.env.PORT || 5000;
 const allowedOrigins = [
     'http://localhost:3000',
     'http://localhost:3001',
+    'https://municipality-cordova-portal.vercel.app',
     process.env.FRONTEND_URL || '',
-    // Add your Vercel/Netlify URL here after deployment
 ].filter(Boolean);
 // Middleware
 app.use((0, cors_1.default)({
