@@ -1,0 +1,143 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                    Int      @id @default(autoincrement())
+  email                 String   @unique
+  password              String
+  firstName             String?
+  middleName            String?
+  lastName              String?
+  barangay              String?
+  contactNumber         String?
+  profileImageUrl       String?  // For storing profile image in cloud storage
+  frontIdDocumentUrl    String?  // Front ID verification document
+  backIdDocumentUrl     String?  // Back ID verification document
+  faceVerificationUrl   String?  // Face verification photo
+  role                  String   @default("citizen") // "citizen", "admin", "official"
+  emailVerified         Boolean  @default(false) // Email address verified via verification code
+  isVerified            Boolean  @default(false) // Citizen status: verified via document submission
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  verificationCodes VerificationCode[]
+  savedEvents       UserEvent[]
+}
+
+model VerificationCode {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  code      String
+  type      String   // "email_verification" or "password_reset"
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  
+  @@index([userId, type, used])
+}
+
+model UserEvent {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  eventId     String   // Reference to event from frontend data
+  eventTitle  String
+  eventDate   DateTime
+  eventTime   String?
+  location    String?
+  notifyBefore Int     @default(24) // Hours before event to notify
+  createdAt   DateTime @default(now())
+  
+  @@unique([userId, eventId])
+  @@index([userId, eventDate])
+}
+
+model Post {
+  id         Int      @id @default(autoincrement())
+  title      String
+  content    String
+  imageUrl   String?
+  type       String   // "news", "announcement", "event"
+  category   String?  // Category for the post
+  priority   String   @default("normal") // "high", "normal", "low"
+  status     String   @default("published") // "published", "draft"
+  isFeatured Boolean  @default(false) // Featured on homepage (max 5)
+  eventStatus String?  // "upcoming", "done" - ONLY for type='event'
+  location   String?
+  eventDate  DateTime?
+  eventTime  String?
+  authorName String?  // Author's full name
+  createdBy  Int?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  
+  @@index([type, status, createdAt])
+  @@index([isFeatured, createdAt])
+}
+
+model ServiceRequest {
+  id            Int      @id @default(autoincrement())
+  userId        Int
+  serviceType   String   // Type of service requested
+  description   String
+  status        String   @default("pending") // "pending", "processing", "completed", "rejected"
+  adminNote     String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@index([userId, status])
+  @@index([status, createdAt])
+}
+
+model AdminActivity {
+  id          Int      @id @default(autoincrement())
+  adminId     Int
+  adminName   String
+  action      String   // "created_post", "updated_user", "approved_verification", etc.
+  targetType  String?  // "post", "user", "service_request"
+  targetId    Int?
+  description String
+  createdAt   DateTime @default(now())
+  
+  @@index([adminId, createdAt])
+  @@index([createdAt])
+}
+
+model Notification {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  type        String   // "featured_post", "verification_approved", "verification_rejected", "service_request_update"
+  title       String
+  message     String
+  relatedId   Int?     // ID of related post or service request
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  
+  @@index([userId, isRead, createdAt])
+  @@index([createdAt])
+}
+
+model VideoHighlight {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  thumbnailUrl String
+  videoUrl    String
+  duration    String?
+  isActive    Boolean  @default(true)
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([isActive, order])
+}
