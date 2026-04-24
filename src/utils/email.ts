@@ -14,17 +14,17 @@ console.log('Email Configuration:', {
 // Initialize Resend if API key is available
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
-// Fallback SMTP transporter
+// Initialize transporter
 const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+  host: process.env.EMAIL_HOST || 'smtp.hostinger.com',
   port: parseInt(process.env.EMAIL_PORT || '465'),
-  secure: true, // Use SSL for port 465
+  secure: process.env.EMAIL_PORT === '465', 
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS || process.env.EMAIL_PASSWORD,
+    pass: process.env.EMAIL_PASS,
   },
   tls: {
-    rejectUnauthorized: true
+    rejectUnauthorized: process.env.NODE_ENV === 'production'
   }
 });
 
@@ -46,14 +46,21 @@ export const sendVerificationEmail = async (email: string, code: string) => {
     // Try Resend first if API key is available
     if (resend) {
       console.log('Sending verification email via Resend API...');
-      const result = await resend.emails.send({
+      const { data, error } = await resend.emails.send({
         from: process.env.EMAIL_FROM || 'onboarding@resend.dev',
         to: email,
         subject: 'Email Verification - Cordova Municipality Portal',
         html: htmlContent,
       });
-      console.log('Verification email sent successfully via Resend:', result.data?.id);
-      return result;
+
+      if (error) {
+        console.error('Resend API error:', error);
+        // Fallback to SMTP if Resend fails
+        console.log('Resend failed, falling back to SMTP...');
+      } else {
+        console.log('Verification email sent successfully via Resend:', data?.id);
+        return { data };
+      }
     }
 
     // Fallback to SMTP
@@ -91,14 +98,21 @@ export const sendPasswordResetEmail = async (email: string, code: string) => {
     // Try Resend first if API key is available
     if (resend) {
       console.log('Sending password reset email via Resend API...');
-      const result = await resend.emails.send({
+      const { data, error } = await resend.emails.send({
         from: process.env.EMAIL_FROM || 'onboarding@resend.dev',
         to: email,
         subject: 'Password Reset - Cordova Municipality Portal',
         html: htmlContent,
       });
-      console.log('Password reset email sent successfully via Resend:', result.data?.id);
-      return result;
+
+      if (error) {
+        console.error('Resend API error:', error);
+        // Fallback to SMTP if Resend fails
+        console.log('Resend failed, falling back to SMTP...');
+      } else {
+        console.log('Password reset email sent successfully via Resend:', data?.id);
+        return { data };
+      }
     }
 
     // Fallback to SMTP

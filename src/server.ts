@@ -1,6 +1,8 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import authRoutes from './routes/auth';
 import userRoutes from './routes/user';
 import eventRoutes from './routes/event';
@@ -12,8 +14,6 @@ import adminActivityRoutes from './routes/adminActivity';
 import notificationRoutes from './routes/notification';
 import videoHighlightRoutes from './routes/videoHighlight';
 
-dotenv.config();
-
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -21,6 +21,7 @@ const PORT = process.env.PORT || 5000;
 const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:3001',
+  'http://localhost:3002',
   'https://municipality-cordova-portal.vercel.app',
   process.env.FRONTEND_URL || '',
 ].filter(Boolean);
