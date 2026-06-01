@@ -72,15 +72,41 @@ exports.uploadPostImages = uploadPostImages;
 const deleteImage = async (req, res) => {
     try {
         const { imageUrl } = req.body;
+        const userId = req.user?.userId;
+        const userRole = req.user?.role;
         if (!imageUrl) {
             return res.status(400).json({ error: 'Image URL is required' });
         }
-        const userId = req.user?.userId;
         if (!userId) {
             return res.status(401).json({ error: 'Unauthorized' });
         }
+        // Check ownership of profile picture or documents
+        const fileIsProfilePic = await database_1.default.user.findFirst({
+            where: { id: userId, profileImageUrl: imageUrl }
+        });
+        const fileIsDoc = await database_1.default.user.findFirst({
+            where: {
+                id: userId,
+                OR: [
+                    { frontIdDocumentUrl: imageUrl },
+                    { backIdDocumentUrl: imageUrl },
+                    { faceVerificationUrl: imageUrl }
+                ]
+            }
+        });
+        const isAuthorized = userRole === 'admin' || userRole === 'official' || !!fileIsProfilePic || !!fileIsDoc;
+        if (!isAuthorized) {
+            return res.status(403).json({ error: 'Forbidden: You do not have permission to delete this file.' });
+        }
         // Delete from storage
         await storage_1.default.delete(imageUrl);
+        // If it was their profile image, nullify the column in db
+        if (fileIsProfilePic) {
+            await database_1.default.user.update({
+                where: { id: userId },
+                data: { profileImageUrl: null }
+            });
+        }
         res.json({ message: 'Image deleted successfully' });
     }
     catch (error) {

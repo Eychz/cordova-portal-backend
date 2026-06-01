@@ -12,6 +12,7 @@ router.get('/profile', auth_1.authenticateToken, userController_1.getProfile);
 router.get('/me', auth_1.authenticateToken, userController_1.getProfile);
 router.put('/profile', auth_1.authenticateToken, userController_1.updateProfile);
 router.patch('/me', auth_1.authenticateToken, userController_1.updateProfile);
+router.put('/change-password', auth_1.authenticateToken, userController_1.changePassword);
 router.put('/:id', auth_1.authenticateToken, auth_1.requireAdmin, userController_1.updateUser);
 router.put('/:id/verify', auth_1.authenticateToken, auth_1.requireAdmin, userController_1.verifyUser);
 router.delete('/:id', auth_1.authenticateToken, auth_1.requireAdmin, userController_1.deleteUser);

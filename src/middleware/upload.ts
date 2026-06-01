@@ -4,14 +4,19 @@ import path from 'path';
 // Configure multer to store files in memory
 const storage = multer.memoryStorage();
 
-// File filter to accept only images
+// File filter to accept images and common documents
 const fileFilter = (req: Express.Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+  const allowedTypes = [
+    'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
+    'application/pdf', 
+    'application/msword', 
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+  ];
   
   if (allowedTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new Error('Invalid file type. Only JPEG, PNG, GIF, and WebP images are allowed.'));
+    cb(new Error('Invalid file type. Only Images, PDFs, and Word documents are allowed.'));
   }
 };
 

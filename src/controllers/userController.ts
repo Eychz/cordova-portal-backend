@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { getUserProfile, updateUserProfile } from '../services/userService';
 import prisma from '../config/database';
-import { notifyVerificationStatus } from '../services/notificationService';
+import bcrypt from 'bcryptjs';
 
 export const getProfile = async (req: Request, res: Response) => {
   try {
@@ -60,7 +60,7 @@ export const updateProfile = async (req: Request, res: Response) => {
 
 export const updateUser = async (req: Request, res: Response) => {
   try {
-    const targetUserId = parseInt(req.params.id);
+    const targetUserId = parseInt(req.params.id as string);
     const { firstName, middleName, lastName, email, role, barangay, points, profileImageUrl, isVerified, contactNumber, frontIdDocumentUrl, backIdDocumentUrl, faceVerificationUrl } = req.body;
     const adminId = req.user!.userId;
     
@@ -120,7 +120,7 @@ export const updateUser = async (req: Request, res: Response) => {
 
 export const verifyUser = async (req: Request, res: Response) => {
   try {
-    const targetUserId = parseInt(req.params.id);
+    const targetUserId = parseInt(req.params.id as string);
     const { isVerified, barangay } = req.body;
     const adminId = req.user!.userId;
     
@@ -151,11 +151,7 @@ export const verifyUser = async (req: Request, res: Response) => {
         description: `${adminName} ${isVerified ? 'approved' : 'rejected'} verification for user ID ${targetUserId}${barangay ? ` and assigned to ${barangay}` : ''}`
       }
     });
-    
-    // Send notification to user
-    notifyVerificationStatus(targetUserId, isVerified, barangay).catch(err =>
-      console.error('Failed to send verification notification:', err)
-    );
+
     
     res.json({
       success: true,
@@ -172,7 +168,7 @@ export const verifyUser = async (req: Request, res: Response) => {
 
 export const deleteUser = async (req: Request, res: Response) => {
   try {
-    const targetUserId = parseInt(req.params.id);
+    const targetUserId = parseInt(req.params.id as string);
     const adminId = req.user!.userId;
     
     // Check if user exists
@@ -254,5 +250,36 @@ export const getAllUsers = async (req: Request, res: Response) => {
     res.status(500).json({ 
       error: 'Failed to fetch users',
     });
+  }
+};
+
+export const changePassword = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user!.userId;
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'Current password and new password are required' });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ error: 'Incorrect current password' });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await prisma.user.update({
+      where: { id: userId },
+      data: { password: hashedPassword }
+    });
+
+    res.json({ success: true, message: 'Password updated successfully' });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message || 'Failed to change password' });
   }
 };

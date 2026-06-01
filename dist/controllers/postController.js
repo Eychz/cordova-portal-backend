@@ -6,12 +6,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.postController = void 0;
 const postService_1 = require("../services/postService");
 const database_1 = __importDefault(require("../config/database"));
-const notificationService_1 = require("../services/notificationService");
 exports.postController = {
     async getAllPosts(req, res) {
         try {
-            const { type, status } = req.query;
-            const posts = await postService_1.postService.getAllPosts(type, status);
+            const { type, status, limit } = req.query;
+            const posts = await postService_1.postService.getAllPosts(type, status, limit ? parseInt(limit) : undefined);
             res.json(posts);
         }
         catch (error) {
@@ -69,10 +68,6 @@ exports.postController = {
                 eventStatus
             });
             console.log(`[Post Create] Success:`, post);
-            // Send notification if post is featured and published
-            if (post.isFeatured && post.status === 'published') {
-                (0, notificationService_1.notifyFeaturedPost)(post.id, post.title, post.type).catch(err => console.error('Failed to send featured post notifications:', err));
-            }
             res.status(201).json(post);
         }
         catch (error) {
@@ -168,10 +163,6 @@ exports.postController = {
                 return res.status(400).json({ error: 'isFeatured must be a boolean' });
             }
             const post = await postService_1.postService.toggleFeaturedPost(id, isFeatured);
-            // Send notification if post is being featured and is published
-            if (isFeatured && post.status === 'published') {
-                (0, notificationService_1.notifyFeaturedPost)(post.id, post.title, post.type).catch(err => console.error('Failed to send featured post notifications:', err));
-            }
             res.json(post);
         }
         catch (error) {
@@ -179,6 +170,20 @@ exports.postController = {
             res.status(error.message.includes('Maximum') ? 400 : 500).json({
                 error: error.message || 'Failed to toggle featured post'
             });
+        }
+    },
+    async getPostBySlug(req, res) {
+        try {
+            const { slug } = req.params;
+            const post = await postService_1.postService.getPostBySlug(slug);
+            if (!post) {
+                return res.status(404).json({ error: 'Post not found' });
+            }
+            res.json(post);
+        }
+        catch (error) {
+            console.error('Error fetching post by slug:', error);
+            res.status(500).json({ error: 'Failed to fetch post' });
         }
     }
 };

@@ -1,15 +1,15 @@
 import { Request, Response } from 'express';
 import { postService } from '../services/postService';
 import prisma from '../config/database';
-import { notifyFeaturedPost } from '../services/notificationService';
 
 export const postController = {
     async getAllPosts(req: Request, res: Response) {
         try {
-            const { type, status } = req.query;
+            const { type, status, limit } = req.query;
             const posts = await postService.getAllPosts(
                 type as string,
-                status as string
+                status as string,
+                limit ? parseInt(limit as string) : undefined
             );
             res.json(posts);
         } catch (error: any) {
@@ -20,7 +20,7 @@ export const postController = {
 
     async getPostById(req: Request, res: Response) {
         try {
-            const id = parseInt(req.params.id);
+            const id = parseInt(req.params.id as string);
             const post = await postService.getPostById(id);
             
             if (!post) {
@@ -79,12 +79,6 @@ export const postController = {
 
             console.log(`[Post Create] Success:`, post);
 
-            // Send notification if post is featured and published
-            if (post.isFeatured && post.status === 'published') {
-                notifyFeaturedPost(post.id, post.title, post.type).catch(err =>
-                    console.error('Failed to send featured post notifications:', err)
-                );
-            }
 
             res.status(201).json(post);
         } catch (error: any) {
@@ -95,7 +89,7 @@ export const postController = {
 
     async updatePost(req: Request, res: Response) {
         try {
-            const id = parseInt(req.params.id);
+            const id = parseInt(req.params.id as string);
             const { title, content, imageUrl, type, priority, status, location, eventDate, eventTime, category, eventStatus } = req.body;
 
             console.log(`[Post Update] ID=${id}, eventStatus=${eventStatus}, status=${status}`);
@@ -132,7 +126,7 @@ export const postController = {
 
     async deletePost(req: Request, res: Response) {
         try {
-            const id = parseInt(req.params.id);
+            const id = parseInt(req.params.id as string);
 
             // Check if post exists
             const existingPost = await postService.getPostById(id);
@@ -171,7 +165,7 @@ export const postController = {
 
     async toggleFeaturedPost(req: Request, res: Response) {
         try {
-            const id = parseInt(req.params.id);
+            const id = parseInt(req.params.id as string);
             const { isFeatured } = req.body;
 
             if (typeof isFeatured !== 'boolean') {
@@ -179,13 +173,7 @@ export const postController = {
             }
 
             const post = await postService.toggleFeaturedPost(id, isFeatured);
-            
-            // Send notification if post is being featured and is published
-            if (isFeatured && post.status === 'published') {
-                notifyFeaturedPost(post.id, post.title, post.type).catch(err =>
-                    console.error('Failed to send featured post notifications:', err)
-                );
-            }
+
             
             res.json(post);
         } catch (error: any) {
@@ -193,6 +181,20 @@ export const postController = {
             res.status(error.message.includes('Maximum') ? 400 : 500).json({ 
                 error: error.message || 'Failed to toggle featured post' 
             });
+        }
+    },
+
+    async getPostBySlug(req: Request, res: Response) {
+        try {
+            const { slug } = req.params;
+            const post = await postService.getPostBySlug(slug as string);
+            if (!post) {
+                return res.status(404).json({ error: 'Post not found' });
+            }
+            res.json(post);
+        } catch (error: any) {
+            console.error('Error fetching post by slug:', error);
+            res.status(500).json({ error: 'Failed to fetch post' });
         }
     }
 };

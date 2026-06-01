@@ -116,3 +116,12 @@ export const resetPassword = async (req: Request, res: Response) => {
     res.status(error.statusCode || 500).json({ error: error.message || 'Password reset failed' });
   }
 };
+
+export const getCurrentUser = async (req: any, res: Response) => {
+  try {
+    // User object is attached by authenticateToken middleware
+    res.json(req.user);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch user session' });
+  }
+};

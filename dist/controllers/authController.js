@@ -33,7 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.resetPassword = exports.forgotPassword = exports.login = exports.resendVerification = exports.verifyEmail = exports.register = void 0;
+exports.getCurrentUser = exports.resetPassword = exports.forgotPassword = exports.login = exports.resendVerification = exports.verifyEmail = exports.register = void 0;
 const authService = __importStar(require("../services/authService"));
 const register = async (req, res) => {
     try {
@@ -142,3 +142,13 @@ const resetPassword = async (req, res) => {
     }
 };
 exports.resetPassword = resetPassword;
+const getCurrentUser = async (req, res) => {
+    try {
+        // User object is attached by authenticateToken middleware
+        res.json(req.user);
+    }
+    catch (error) {
+        res.status(500).json({ error: 'Failed to fetch user session' });
+    }
+};
+exports.getCurrentUser = getCurrentUser;

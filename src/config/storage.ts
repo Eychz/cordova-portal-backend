@@ -1,102 +1,71 @@
-import { Storage } from '@google-cloud/storage';
-import path from 'path';
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { v4 as uuidv4 } from 'uuid';
 
-// Initialize Google Cloud Storage
-// For now, we'll use a mock implementation until GCS is properly configured
-// To use real GCS, set up a service account and provide credentials
+const s3Client = new S3Client({
+  region: process.env.STORAGE_REGION || 'ap-southeast-1',
+  endpoint: process.env.STORAGE_ENDPOINT_URL,
+  credentials: {
+    accessKeyId: process.env.STORAGE_ACCESS_KEY || '',
+    secretAccessKey: process.env.STORAGE_SECRET_KEY || '',
+  },
+  forcePathStyle: true, // Required for Supabase S3
+});
 
-const isDevelopment = process.env.NODE_ENV !== 'production';
-
-// Mock storage for development (stores files locally)
-class MockStorage {
+class S3Storage {
   private bucketName: string;
 
-  constructor(bucketName: string) {
-    this.bucketName = bucketName;
+  constructor() {
+    this.bucketName = process.env.STORAGE_BUCKET_NAME || 'portal-uploads';
   }
 
   async upload(file: Express.Multer.File, destination: string): Promise<string> {
-    // In development, we'll return a mock URL
-    // In production, this would upload to GCS and return the public URL
-    const fileName = `${Date.now()}-${file.originalname}`;
-    const mockUrl = `http://localhost:5000/uploads/${destination}/${fileName}`;
+    const fileExt = file.originalname.split('.').pop() || '';
+    const uniqueId = uuidv4();
+    const fileName = `${destination}/${Date.now()}-${uniqueId}.${fileExt}`;
     
-    console.log(`[MOCK GCS] Would upload file: ${file.originalname} to ${destination}/${fileName}`);
-    console.log(`[MOCK GCS] Mock URL: ${mockUrl}`);
-    
-    return mockUrl;
-  }
-
-  async delete(fileUrl: string): Promise<void> {
-    console.log(`[MOCK GCS] Would delete file: ${fileUrl}`);
-  }
-}
-
-// Real GCS implementation (uncomment when ready)
-class RealStorage {
-  private storage: Storage;
-  private bucketName: string;
-
-  constructor(bucketName: string, keyFilename?: string) {
-    this.bucketName = bucketName;
-    
-    // Initialize with credentials
-    this.storage = new Storage({
-      keyFilename: keyFilename || process.env.GCS_KEY_FILE,
-      projectId: process.env.GCS_PROJECT_ID,
-    });
-  }
-
-  async upload(file: Express.Multer.File, destination: string): Promise<string> {
-    const fileName = `${destination}/${Date.now()}-${file.originalname}`;
-    const bucket = this.storage.bucket(this.bucketName);
-    const blob = bucket.file(fileName);
-
-    const blobStream = blob.createWriteStream({
-      resumable: false,
-      metadata: {
-        contentType: file.mimetype,
-      },
+    const command = new PutObjectCommand({
+      Bucket: this.bucketName,
+      Key: fileName,
+      Body: file.buffer,
+      ContentType: file.mimetype,
+      CacheControl: '3600',
     });
 
-    return new Promise((resolve, reject) => {
-      blobStream.on('error', (err) => {
-        console.error('Upload error:', err);
-        reject(err);
-      });
-
-      blobStream.on('finish', async () => {
-        // Make the file public
-        await blob.makePublic();
-        
-        const publicUrl = `https://storage.googleapis.com/${this.bucketName}/${fileName}`;
-        console.log(`[GCS] File uploaded: ${publicUrl}`);
-        resolve(publicUrl);
-      });
-
-      blobStream.end(file.buffer);
-    });
+    console.log(`[S3] Starting upload to bucket: ${this.bucketName}, key: ${fileName}`);
+    try {
+      await s3Client.send(command);
+      
+      // Construct public URL
+      const endpoint = process.env.STORAGE_ENDPOINT_URL || '';
+      const baseUrl = endpoint.replace('/s3', '/object/public');
+      const publicUrl = `${baseUrl}/${this.bucketName}/${fileName}`;
+      
+      console.log(`[S3] File uploaded successfully: ${publicUrl}`);
+      return publicUrl;
+    } catch (error) {
+      console.error('S3 SDK Error:', error);
+      throw error;
+    }
   }
 
   async delete(fileUrl: string): Promise<void> {
     try {
-      const fileName = fileUrl.split(`${this.bucketName}/`)[1];
-      if (!fileName) return;
+      const urlParts = fileUrl.split(`/${this.bucketName}/`);
+      if (urlParts.length < 2) return;
+      const fileKey = urlParts[1];
 
-      const bucket = this.storage.bucket(this.bucketName);
-      await bucket.file(fileName).delete();
-      console.log(`[GCS] File deleted: ${fileName}`);
+      const command = new DeleteObjectCommand({
+        Bucket: this.bucketName,
+        Key: fileKey,
+      });
+
+      await s3Client.send(command);
+      console.log(`[S3] File deleted: ${fileKey}`);
     } catch (error) {
-      console.error('Delete error:', error);
+      console.error('S3 Delete Error:', error);
     }
   }
 }
 
-// Export the appropriate storage based on environment
-const bucketName = process.env.GCS_BUCKET_NAME || 'cordova-municipality-uploads';
-
-export const storageService = isDevelopment 
-  ? new MockStorage(bucketName)
-  : new RealStorage(bucketName);
-
+export const storageService = new S3Storage();
 export default storageService;

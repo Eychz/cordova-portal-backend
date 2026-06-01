@@ -5,10 +5,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const statsController_1 = require("../controllers/statsController");
+const userController_1 = require("../controllers/userController");
 const auth_1 = require("../middleware/auth");
 const router = express_1.default.Router();
 // Admin statistics endpoint
 router.get('/admin/stats', auth_1.authenticateToken, statsController_1.getAdminStats);
 // Get all users (admin only)
-router.get('/users', auth_1.authenticateToken, statsController_1.getAllUsers);
+router.get('/users', auth_1.authenticateToken, userController_1.getAllUsers);
 exports.default = router;

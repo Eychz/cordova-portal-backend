@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.postService = void 0;
 const database_1 = __importDefault(require("../config/database"));
 exports.postService = {
-    async getAllPosts(type, status) {
+    async getAllPosts(type, status, limit) {
         const where = {};
         if (type)
             where.type = type;
@@ -14,7 +14,8 @@ exports.postService = {
             where.status = status;
         return await database_1.default.post.findMany({
             where,
-            orderBy: { createdAt: 'desc' }
+            orderBy: { createdAt: 'desc' },
+            ...(limit ? { take: limit } : {})
         });
     },
     async getPostById(id) {
@@ -108,5 +109,14 @@ exports.postService = {
                 updatedAt: new Date()
             }
         });
+    },
+    async getPostBySlug(slug) {
+        const posts = await database_1.default.post.findMany({
+            where: { status: 'published' }
+        });
+        return posts.find(p => {
+            const postSlug = p.title.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
+            return postSlug === slug;
+        }) || null;
     }
 };

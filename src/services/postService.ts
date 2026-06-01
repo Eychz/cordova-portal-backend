@@ -33,7 +33,7 @@ export interface UpdatePostData {
 }
 
 export const postService = {
-    async getAllPosts(type?: string, status?: string) {
+    async getAllPosts(type?: string, status?: string, limit?: number) {
         const where: any = {};
         
         if (type) where.type = type;
@@ -41,7 +41,8 @@ export const postService = {
 
         return await prisma.post.findMany({
             where,
-            orderBy: { createdAt: 'desc' }
+            orderBy: { createdAt: 'desc' },
+            ...(limit ? { take: limit } : {})
         });
     },
 
@@ -145,5 +146,15 @@ export const postService = {
                 updatedAt: new Date()
             }
         });
+    },
+
+    async getPostBySlug(slug: string) {
+        const posts = await prisma.post.findMany({
+            where: { status: 'published' }
+        });
+        return posts.find(p => {
+            const postSlug = p.title.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
+            return postSlug === slug;
+        }) || null;
     }
 };

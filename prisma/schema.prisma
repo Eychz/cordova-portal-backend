@@ -141,3 +141,70 @@ model VideoHighlight {
   
   @@index([isActive, order])
 }
+
+model Service {
+  id             Int      @id @default(autoincrement())
+  name           String
+  description    String
+  icon           String
+  category       String?
+  formFileUrl    String?
+  processSteps   Json? // Array of steps
+  fee            String?
+  requirements   Json? // Array of string requirements
+  hotline        String?
+  email          String?
+  processingTime String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+
+model Official {
+  id             Int      @id @default(autoincrement())
+  name           String
+  position       String
+  slug           String?  @unique // Optional slug to prevent db push errors on existing tables with rows
+  type           String   // MUNICIPAL, DEPARTMENT, BARANGAY, SK
+  hierarchyOrder Int      @default(0)
+  imageUrl       String?
+  barangayName   String?  // Only for BARANGAY and SK
+  email          String?
+  contactNumber  String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model MunicipalOfficial {
+  id             Int      @id @default(autoincrement())
+  name           String
+  position       String
+  hierarchyOrder Int      @default(0) // 1 for Mayor, 2 for Vice Mayor, etc.
+  imageUrl       String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model BarangayOfficial {
+  id             Int      @id @default(autoincrement())
+  name           String
+  position       String
+  hierarchyOrder Int      @default(0) // 1 for Captain, 2 for Kagawad, etc.
+  barangayName   String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model EmergencyHotline {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  contact     String
+  category    String   // e.g. "Security", "Fire & Rescue", "Medical", "Maritime"
+  icon        String   // e.g. "ShieldCheck", "Flame", "Cross", "Ambulance", "Anchor"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([category])
+}
+

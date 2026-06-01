@@ -239,7 +239,7 @@ const resendVerificationCode = async (email) => {
         throw new Error('Email already verified');
     }
     // Generate new verification code
-    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const verificationCode = (0, helpers_1.generateVerificationCode)();
     // Create verification code record with 10-minute expiry
     await database_1.default.verificationCode.create({
         data: {

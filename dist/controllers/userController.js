@@ -3,10 +3,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getAllUsers = exports.deleteUser = exports.verifyUser = exports.updateUser = exports.updateProfile = exports.getProfile = void 0;
+exports.changePassword = exports.getAllUsers = exports.deleteUser = exports.verifyUser = exports.updateUser = exports.updateProfile = exports.getProfile = void 0;
 const userService_1 = require("../services/userService");
 const database_1 = __importDefault(require("../config/database"));
-const notificationService_1 = require("../services/notificationService");
+const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const getProfile = async (req, res) => {
     try {
         const userId = req.user.userId;
@@ -156,8 +156,6 @@ const verifyUser = async (req, res) => {
                 description: `${adminName} ${isVerified ? 'approved' : 'rejected'} verification for user ID ${targetUserId}${barangay ? ` and assigned to ${barangay}` : ''}`
             }
         });
-        // Send notification to user
-        (0, notificationService_1.notifyVerificationStatus)(targetUserId, isVerified, barangay).catch(err => console.error('Failed to send verification notification:', err));
         res.json({
             success: true,
             message: `User verification ${isVerified ? 'approved' : 'rejected'} successfully`,
@@ -253,3 +251,30 @@ const getAllUsers = async (req, res) => {
     }
 };
 exports.getAllUsers = getAllUsers;
+const changePassword = async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const { currentPassword, newPassword } = req.body;
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({ error: 'Current password and new password are required' });
+        }
+        const user = await database_1.default.user.findUnique({ where: { id: userId } });
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        const isMatch = await bcryptjs_1.default.compare(currentPassword, user.password);
+        if (!isMatch) {
+            return res.status(400).json({ error: 'Incorrect current password' });
+        }
+        const hashedPassword = await bcryptjs_1.default.hash(newPassword, 10);
+        await database_1.default.user.update({
+            where: { id: userId },
+            data: { password: hashedPassword }
+        });
+        res.json({ success: true, message: 'Password updated successfully' });
+    }
+    catch (error) {
+        res.status(500).json({ error: error.message || 'Failed to change password' });
+    }
+};
+exports.changePassword = changePassword;

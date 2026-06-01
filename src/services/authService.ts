@@ -288,7 +288,7 @@ export const resendVerificationCode = async (email: string) => {
   }
 
   // Generate new verification code
-  const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+  const verificationCode = generateVerificationCode();
 
   // Create verification code record with 10-minute expiry
   await prisma.verificationCode.create({

@@ -8,11 +8,13 @@ const router = express.Router();
 router.get('/', postController.getAllPosts);
 router.get('/upcoming-events', postController.getUpcomingEvents);
 router.get('/featured', postController.getFeaturedPosts);
+router.get('/slug/:slug', postController.getPostBySlug);
 router.get('/:id', postController.getPostById);
 
 // Admin-only routes (protected)
 router.post('/', authenticateToken, authorizeRole('admin', 'official'), postController.createPost);
 router.put('/:id', authenticateToken, authorizeRole('admin', 'official'), postController.updatePost);
+router.patch('/:id', authenticateToken, authorizeRole('admin', 'official'), postController.updatePost);
 router.put('/:id/featured', authenticateToken, authorizeRole('admin'), postController.toggleFeaturedPost);
 router.delete('/:id', authenticateToken, authorizeRole('admin', 'official'), postController.deletePost);
 
