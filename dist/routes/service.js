@@ -55,12 +55,14 @@ router.get('/:id', async (req, res) => {
 // Admin Only: Create service
 router.post('/', auth_1.authenticateToken, auth_1.requireAdmin, async (req, res) => {
     try {
-        const { name, description, icon, category, formFileUrl, processSteps, fee, requirements, hotline, email, processingTime } = req.body;
+        const { name, description, icon, imageUrl, externalUrl, category, formFileUrl, processSteps, fee, requirements, hotline, email, processingTime } = req.body;
         const service = await database_1.default.service.create({
             data: {
                 name,
                 description,
                 icon,
+                imageUrl,
+                externalUrl,
                 category,
                 formFileUrl,
                 processSteps,
@@ -82,13 +84,15 @@ router.post('/', auth_1.authenticateToken, auth_1.requireAdmin, async (req, res)
 router.put('/:id', auth_1.authenticateToken, auth_1.requireAdmin, async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, description, icon, category, formFileUrl, processSteps, fee, requirements, hotline, email, processingTime } = req.body;
+        const { name, description, icon, imageUrl, externalUrl, category, formFileUrl, processSteps, fee, requirements, hotline, email, processingTime } = req.body;
         const service = await database_1.default.service.update({
             where: { id: parseInt(id) },
             data: {
                 name,
                 description,
                 icon,
+                imageUrl,
+                externalUrl,
                 category,
                 formFileUrl,
                 processSteps,

@@ -50,12 +50,14 @@ router.get('/:id', async (req, res) => {
 // Admin Only: Create service
 router.post('/', authenticateToken, requireAdmin, async (req: any, res) => {
   try {
-    const { name, description, icon, category, formFileUrl, processSteps, fee, requirements, hotline, email, processingTime } = req.body;
+    const { name, description, icon, imageUrl, externalUrl, category, formFileUrl, processSteps, fee, requirements, hotline, email, processingTime } = req.body;
     const service = await prisma.service.create({
       data: {
         name,
         description,
         icon,
+        imageUrl,
+        externalUrl,
         category,
         formFileUrl,
         processSteps,
@@ -78,7 +80,7 @@ router.put('/:id', authenticateToken, requireAdmin, async (req: any, res) => {
   try {
     const { id } = req.params;
     const {
-      name, description, icon, category,
+      name, description, icon, imageUrl, externalUrl, category,
       formFileUrl, processSteps, fee, requirements, hotline, email, processingTime
     } = req.body;
 
@@ -88,6 +90,8 @@ router.put('/:id', authenticateToken, requireAdmin, async (req: any, res) => {
         name,
         description,
         icon,
+        imageUrl,
+        externalUrl,
         category,
         formFileUrl,
         processSteps,

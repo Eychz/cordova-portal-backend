@@ -147,7 +147,9 @@ model Service {
   id             Int      @id @default(autoincrement())
   name           String
   description    String
-  icon           String
+  icon           String?  // Made optional since we are transitioning to imageUrl
+  imageUrl       String?  // Image thumbnail for the service
+  externalUrl    String?  // Custom redirection URL
   category       String?
   formFileUrl    String?
   processSteps   Json? // Array of steps
