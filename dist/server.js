@@ -23,6 +23,7 @@ const service_1 = __importDefault(require("./routes/service"));
 // import serviceRequestRoutes from './routes/serviceRequest';
 const official_1 = __importDefault(require("./routes/official"));
 const emergency_1 = __importDefault(require("./routes/emergency"));
+const changeLog_1 = __importDefault(require("./routes/changeLog"));
 const app = (0, express_1.default)();
 const server = http_1.default.createServer(app);
 const PORT = process.env.PORT || 5000;
@@ -70,6 +71,7 @@ app.use('/api/services', service_1.default);
 // app.use('/api/service-requests', serviceRequestRoutes);
 app.use('/api/officials', official_1.default);
 app.use('/api/emergency', emergency_1.default);
+app.use('/api/change-logs', changeLog_1.default);
 // Health check
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', message: 'Backend server is running' });

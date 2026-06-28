@@ -21,6 +21,7 @@ import serviceRoutes from './routes/service';
 // import serviceRequestRoutes from './routes/serviceRequest';
 import officialRoutes from './routes/official';
 import emergencyRoutes from './routes/emergency';
+import changeLogRoutes from './routes/changeLog';
 
 const app = express();
 const server = http.createServer(app);
@@ -72,6 +73,7 @@ app.use('/api/services', serviceRoutes);
 // app.use('/api/service-requests', serviceRequestRoutes);
 app.use('/api/officials', officialRoutes);
 app.use('/api/emergency', emergencyRoutes);
+app.use('/api/change-logs', changeLogRoutes);
 
 
 // Health check
