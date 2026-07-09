@@ -5,13 +5,27 @@ import prisma from '../config/database';
 export const postController = {
     async getAllPosts(req: Request, res: Response) {
         try {
-            const { type, status, limit } = req.query;
-            const posts = await postService.getAllPosts(
-                type as string,
-                status as string,
-                limit ? parseInt(limit as string) : undefined
+            const { type, status, page, limit, search, date, category } = req.query;
+            const parsedPage = parseInt(page as string) || 1;
+            const parsedLimit = parseInt(limit as string) || 30;
+
+            const cleanString = (val: any) => {
+                if (typeof val !== 'string') return undefined;
+                const trimmed = val.trim();
+                if (trimmed === '' || trimmed === 'undefined' || trimmed === 'null') return undefined;
+                return trimmed;
+            };
+
+            const result = await postService.getAllPosts(
+                cleanString(type),
+                cleanString(status),
+                parsedPage,
+                parsedLimit,
+                cleanString(search),
+                cleanString(date),
+                cleanString(category)
             );
-            res.json(posts);
+            res.json(result);
         } catch (error: any) {
             console.error('Error fetching posts:', error);
             res.status(500).json({ error: 'Failed to fetch posts' });

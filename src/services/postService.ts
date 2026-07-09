@@ -33,17 +33,55 @@ export interface UpdatePostData {
 }
 
 export const postService = {
-    async getAllPosts(type?: string, status?: string, limit?: number) {
+    async getAllPosts(type?: string, status?: string, page = 1, limit = 30, search?: string, date?: string, category?: string) {
         const where: any = {};
         
         if (type) where.type = type;
         if (status) where.status = status;
+        if (category) where.category = category;
+        if (search) {
+            where.OR = [
+                { title: { contains: search, mode: 'insensitive' } },
+                { content: { contains: search, mode: 'insensitive' } },
+                { category: { contains: search, mode: 'insensitive' } }
+            ];
+        }
+        if (date) {
+            const startDate = new Date(date);
+            if (!isNaN(startDate.getTime())) {
+                const endDate = new Date(date);
+                endDate.setDate(endDate.getDate() + 1);
+                where.createdAt = {
+                    gte: startDate,
+                    lt: endDate
+                };
+            }
+        }
 
-        return await prisma.post.findMany({
-            where,
-            orderBy: { createdAt: 'desc' },
-            ...(limit ? { take: limit } : {})
-        });
+        const parsedLimit = Math.min(limit, 30);
+        const skip = (page - 1) * parsedLimit;
+
+        const [posts, total] = await Promise.all([
+            prisma.post.findMany({
+                where,
+                orderBy: { createdAt: 'desc' },
+                skip,
+                take: parsedLimit
+            }),
+            prisma.post.count({ where })
+        ]);
+
+        return {
+            posts,
+            pagination: {
+                total,
+                page,
+                limit: parsedLimit,
+                totalPages: Math.ceil(total / parsedLimit),
+                hasNextPage: page * parsedLimit < total,
+                hasPrevPage: page > 1
+            }
+        };
     },
 
     async getPostById(id: number) {

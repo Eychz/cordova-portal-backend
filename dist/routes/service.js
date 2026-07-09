@@ -6,13 +6,19 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const database_1 = __importDefault(require("../config/database"));
 const auth_1 = require("../middleware/auth");
+const redis_1 = require("../utils/redis");
 const router = (0, express_1.Router)();
 // Public: Get all services
 router.get('/', async (req, res) => {
     try {
+        const cachedServices = await redis_1.redisClient.get('cache:services');
+        if (cachedServices) {
+            return res.json(JSON.parse(cachedServices));
+        }
         const services = await database_1.default.service.findMany({
             orderBy: { createdAt: 'desc' }
         });
+        await redis_1.redisClient.set('cache:services', JSON.stringify(services), 3600);
         res.json(services);
     }
     catch (error) {
@@ -73,6 +79,7 @@ router.post('/', auth_1.authenticateToken, auth_1.requireAdmin, async (req, res)
                 processingTime
             }
         });
+        await redis_1.redisClient.del('cache:services');
         res.status(201).json(service);
     }
     catch (error) {
@@ -103,6 +110,7 @@ router.put('/:id', auth_1.authenticateToken, auth_1.requireAdmin, async (req, re
                 processingTime
             }
         });
+        await redis_1.redisClient.del('cache:services');
         res.json(service);
     }
     catch (error) {
@@ -117,6 +125,7 @@ router.delete('/:id', auth_1.authenticateToken, auth_1.requireAdmin, async (req,
         await database_1.default.service.delete({
             where: { id: parseInt(id) }
         });
+        await redis_1.redisClient.del('cache:services');
         res.json({ message: 'Service deleted successfully' });
     }
     catch (error) {

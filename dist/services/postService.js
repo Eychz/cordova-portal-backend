@@ -6,17 +6,54 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.postService = void 0;
 const database_1 = __importDefault(require("../config/database"));
 exports.postService = {
-    async getAllPosts(type, status, limit) {
+    async getAllPosts(type, status, page = 1, limit = 30, search, date, category) {
         const where = {};
         if (type)
             where.type = type;
         if (status)
             where.status = status;
-        return await database_1.default.post.findMany({
-            where,
-            orderBy: { createdAt: 'desc' },
-            ...(limit ? { take: limit } : {})
-        });
+        if (category)
+            where.category = category;
+        if (search) {
+            where.OR = [
+                { title: { contains: search, mode: 'insensitive' } },
+                { content: { contains: search, mode: 'insensitive' } },
+                { category: { contains: search, mode: 'insensitive' } }
+            ];
+        }
+        if (date) {
+            const startDate = new Date(date);
+            if (!isNaN(startDate.getTime())) {
+                const endDate = new Date(date);
+                endDate.setDate(endDate.getDate() + 1);
+                where.createdAt = {
+                    gte: startDate,
+                    lt: endDate
+                };
+            }
+        }
+        const parsedLimit = Math.min(limit, 30);
+        const skip = (page - 1) * parsedLimit;
+        const [posts, total] = await Promise.all([
+            database_1.default.post.findMany({
+                where,
+                orderBy: { createdAt: 'desc' },
+                skip,
+                take: parsedLimit
+            }),
+            database_1.default.post.count({ where })
+        ]);
+        return {
+            posts,
+            pagination: {
+                total,
+                page,
+                limit: parsedLimit,
+                totalPages: Math.ceil(total / parsedLimit),
+                hasNextPage: page * parsedLimit < total,
+                hasPrevPage: page > 1
+            }
+        };
     },
     async getPostById(id) {
         return await database_1.default.post.findUnique({

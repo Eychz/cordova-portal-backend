@@ -32,6 +32,8 @@ model User {
   
   verificationCodes VerificationCode[]
   savedEvents       UserEvent[]
+
+  @@index([role, isVerified])
 }
 
 model VerificationCode {
@@ -160,6 +162,8 @@ model Service {
   processingTime String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+
+  @@index([category])
 }
 
 
@@ -176,6 +180,8 @@ model Official {
   contactNumber  String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+
+  @@index([type, barangayName])
 }
 
 model MunicipalOfficial {
@@ -196,6 +202,8 @@ model BarangayOfficial {
   barangayName   String
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+
+  @@index([barangayName, hierarchyOrder])
 }
 
 model EmergencyHotline {
@@ -219,5 +227,7 @@ model ChangeLog {
   approvedBy  String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  @@index([date])
 }
 

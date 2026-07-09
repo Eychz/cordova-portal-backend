@@ -9,9 +9,19 @@ const database_1 = __importDefault(require("../config/database"));
 exports.postController = {
     async getAllPosts(req, res) {
         try {
-            const { type, status, limit } = req.query;
-            const posts = await postService_1.postService.getAllPosts(type, status, limit ? parseInt(limit) : undefined);
-            res.json(posts);
+            const { type, status, page, limit, search, date, category } = req.query;
+            const parsedPage = parseInt(page) || 1;
+            const parsedLimit = parseInt(limit) || 30;
+            const cleanString = (val) => {
+                if (typeof val !== 'string')
+                    return undefined;
+                const trimmed = val.trim();
+                if (trimmed === '' || trimmed === 'undefined' || trimmed === 'null')
+                    return undefined;
+                return trimmed;
+            };
+            const result = await postService_1.postService.getAllPosts(cleanString(type), cleanString(status), parsedPage, parsedLimit, cleanString(search), cleanString(date), cleanString(category));
+            res.json(result);
         }
         catch (error) {
             console.error('Error fetching posts:', error);

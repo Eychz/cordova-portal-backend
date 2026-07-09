@@ -1,15 +1,23 @@
 import { Router } from 'express';
 import prisma from '../config/database';
 import { authenticateToken, requireAdmin } from '../middleware/auth';
+import { redisClient } from '../utils/redis';
 
 const router = Router();
 
 // Public: Get all services
 router.get('/', async (req, res) => {
   try {
+    const cachedServices = await redisClient.get('cache:services');
+    if (cachedServices) {
+      return res.json(JSON.parse(cachedServices));
+    }
+
     const services = await prisma.service.findMany({
       orderBy: { createdAt: 'desc' }
     });
+
+    await redisClient.set('cache:services', JSON.stringify(services), 3600);
     res.json(services);
   } catch (error) {
     console.error('Error fetching services:', error);
@@ -68,6 +76,7 @@ router.post('/', authenticateToken, requireAdmin, async (req: any, res) => {
         processingTime
       }
     });
+    await redisClient.del('cache:services');
     res.status(201).json(service);
   } catch (error) {
     console.error('Error creating service:', error);
@@ -102,6 +111,7 @@ router.put('/:id', authenticateToken, requireAdmin, async (req: any, res) => {
         processingTime
       }
     });
+    await redisClient.del('cache:services');
     res.json(service);
   } catch (error) {
     console.error('Update error:', error);
@@ -116,6 +126,7 @@ router.delete('/:id', authenticateToken, requireAdmin, async (req: any, res) => 
     await prisma.service.delete({
       where: { id: parseInt(id) }
     });
+    await redisClient.del('cache:services');
     res.json({ message: 'Service deleted successfully' });
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete service' });
