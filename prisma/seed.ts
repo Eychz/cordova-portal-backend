@@ -5,6 +5,57 @@ import * as path from 'path';
 
 const prisma = new PrismaClient();
 
+const DEPARTMENT_OFFICIALS = [
+  // 1. EXECUTIVE
+  { name: 'Ms. Jennifer J. Calimbo', position: 'Executive Secretary | Mayor\'s Office', type: 'DEPARTMENT', hierarchyOrder: 1 },
+  { name: 'Mr. Sean Lloyd Wahing', position: 'Executive Assistant | Mayor\'s Office', type: 'DEPARTMENT', hierarchyOrder: 2 },
+  { name: 'Atty. Christian Lulu A. Kong', position: 'Municipal Administrator | Mayor\'s Office', type: 'DEPARTMENT', hierarchyOrder: 3 },
+  { name: 'Atty. Leonides A. Ator', position: 'Municipal Planning & Development Officer | MPDO', type: 'DEPARTMENT', hierarchyOrder: 4 },
+  { name: 'Mr. Marjun O. Baguio', position: 'Officer-in-Charge | PIO', type: 'DEPARTMENT', hierarchyOrder: 5 },
+  { name: 'Ms. July E. Cortes', position: 'HRMO III | HRMO', type: 'DEPARTMENT', hierarchyOrder: 6 },
+  { name: 'Ms. Racquel Sombilon', position: 'Supply and Procurement Officer | Mayor\'s Office', type: 'DEPARTMENT', hierarchyOrder: 7 },
+  { name: 'Mr. Norgelito Sitoy', position: 'Officer-in-Charge | Action Team', type: 'DEPARTMENT', hierarchyOrder: 8 },
+  { name: 'Mr. Mark Gavin Doming', position: 'Officer-in-Charge | Motorpool', type: 'DEPARTMENT', hierarchyOrder: 9 },
+  { name: 'Ms. Geneva T. Daugdaug', position: 'Officer-in-Charge | ICT', type: 'DEPARTMENT', hierarchyOrder: 10 },
+
+  // 2. LEGISLATIVE
+  { name: 'Atty. Goldie Ann Taghoy', position: 'SB Secretary | SB', type: 'DEPARTMENT', hierarchyOrder: 11 },
+
+  // 3. ECONOMIC FINANCE
+  { name: 'Mr. Vicente B. Sumalinog Jr.', position: 'Municipal Accountant | Accounting', type: 'DEPARTMENT', hierarchyOrder: 12 },
+  { name: 'Mr. Jaime E. Sumagang', position: 'Municipal Treasurer | Treasury', type: 'DEPARTMENT', hierarchyOrder: 13 },
+  { name: 'Ms. Agnes E. Arado', position: 'Municipal Budget Officer | Budget', type: 'DEPARTMENT', hierarchyOrder: 14 },
+  { name: 'Ms. Fre Lyn O. Quisel', position: 'Municipal Assessor | Assessor', type: 'DEPARTMENT', hierarchyOrder: 15 },
+  { name: 'Ms. Fe R. Tiro', position: 'Officer-in-Charge | BPLO', type: 'DEPARTMENT', hierarchyOrder: 16 },
+
+  // 4. SOCIAL SERVICES
+  { name: 'Dr. Thirdy Louise A. Kong', position: 'Municipal Health Officer | Cordova PCHF', type: 'DEPARTMENT', hierarchyOrder: 17 },
+  { name: 'Mr. Perlito B. Mahinay Jr.', position: 'Municipal Social Welfare & Development Officer | MSWDO', type: 'DEPARTMENT', hierarchyOrder: 18 },
+  { name: 'Mr. Perlito B. Mahinay Jr.', position: 'Designated Officer | MCR', type: 'DEPARTMENT', hierarchyOrder: 19 },
+
+  // 5. ECONOMIC SUPPORT
+  { name: 'Engr. Soripo B. Singculan', position: 'Municipal Engineer | OBO', type: 'DEPARTMENT', hierarchyOrder: 20 },
+  { name: 'Ms. Julieta G. Tampus', position: 'Officer-in-Charge | MAO', type: 'DEPARTMENT', hierarchyOrder: 21 },
+  { name: 'Ms. Mildred Uy', position: 'Officer-in-Charge | Fisheries', type: 'DEPARTMENT', hierarchyOrder: 22 },
+  { name: 'Mr. Norgelito Sitoy', position: 'President | UMEC', type: 'DEPARTMENT', hierarchyOrder: 23 },
+
+  // 6. PUBLIC SAFETY
+  { name: 'Mr. Vincent Benitez', position: 'Local DRRM Officer III | MDRRMO', type: 'DEPARTMENT', hierarchyOrder: 24 },
+  { name: 'Mr. Wilfredo Anlocotan', position: 'Officer-in-Charge | MDRRMO', type: 'DEPARTMENT', hierarchyOrder: 25 },
+  { name: 'Mr. Erwin Restauro', position: 'Officer-in-Charge | CTM', type: 'DEPARTMENT', hierarchyOrder: 26 },
+  { name: 'Mr. Rogelio Saquilabon Jr.', position: 'Officer-in-Charge | Marine Watch', type: 'DEPARTMENT', hierarchyOrder: 27 },
+
+  // 7. ECONOMIC ENTERPRISE
+  { name: 'Dr. Fatima Richell Eviota', position: 'School Administrator | CPC', type: 'DEPARTMENT', hierarchyOrder: 28 },
+  { name: 'Mr. Andres Dinoy', position: 'Officer-in-Charge | Cordova Townsquare', type: 'DEPARTMENT', hierarchyOrder: 29 },
+  { name: 'Mr. Allan Tiro', position: 'Officer-in-Charge | Roro Port', type: 'DEPARTMENT', hierarchyOrder: 30 },
+  { name: 'Mr. Manuel Nuñez', position: 'Officer-in-Charge | Solid Waste Management', type: 'DEPARTMENT', hierarchyOrder: 31 },
+  { name: 'Ms. Suzette Baguio', position: 'Officer-in-Charge | Sport & Cultural Center', type: 'DEPARTMENT', hierarchyOrder: 32 },
+
+  // 8. HERITAGE CONSERVATION
+  { name: 'Ms. Aida P. Jumao-as', position: 'Officer-in-Charge | Tourism', type: 'DEPARTMENT', hierarchyOrder: 33 }
+];
+
 const ALEGRIA_OFFICIALS = [
   // Barangay
   { name: 'Juan Dela Cruz', position: 'Barangay Captain', type: 'BARANGAY', hierarchyOrder: 1, barangayName: 'Alegria' },
@@ -229,194 +280,154 @@ async function main() {
   console.log('Parsing Excel & Word Documents for Unified Officials Seeding...');
 
   // A. Parse Excel for Barangay & SK Officials
-  const excelPath = path.join(__dirname, '../../Barangay Officials and SK Officials.xlsx');
-  const workbook = XLSX.readFile(excelPath);
-  const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-  const excelData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][];
+  try {
+    const excelPath = path.join(__dirname, '../../Barangay Officials and SK Officials.xlsx');
+    const workbook = XLSX.readFile(excelPath);
+    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+    const excelData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][];
 
-  for (let i = 1; i < excelData.length; i++) {
-    const row = excelData[i];
-    if (!row || row.length === 0) continue;
+    for (let i = 1; i < excelData.length; i++) {
+      const row = excelData[i];
+      if (!row || row.length === 0) continue;
 
-    const barangayNameRaw = row[0];
-    if (!barangayNameRaw) continue;
+      const barangayName = row[0]?.toString().trim();
+      if (!barangayName) continue;
 
-    const barangayName = barangayNameRaw.trim();
-    if (!barangayName) continue;
-
-    const isAlegria = barangayName.toLowerCase() === 'alegria';
-    const isPilipog = barangayName.toLowerCase() === 'pilipog';
-
-    // Fallbacks if columns are empty
-    if (isAlegria && (row.length <= 1 || !row[1] || row[1].trim() === '')) {
-      console.log('Seeding Alegria using fallback mock data...');
-      for (const official of ALEGRIA_OFFICIALS) {
-        await seedOfficial(official);
+      // Skip table header rows or blank lines
+      if (barangayName.toLowerCase() === 'barangay' || barangayName.toLowerCase().includes('sheet')) {
+        continue;
       }
-      continue;
-    }
 
-    if (isPilipog && (row.length <= 1 || !row[1] || row[1].trim() === '')) {
-      console.log('Seeding Pilipog using fallback mock data...');
-      for (const official of PILIPOG_OFFICIALS) {
-        await seedOfficial(official);
+      // Check if fallback mock data is needed
+      const isAlegria = barangayName.toLowerCase() === 'alegria';
+      const isPilipog = barangayName.toLowerCase() === 'pilipog';
+
+      // Fallbacks if columns are empty
+      if (isAlegria && (row.length <= 1 || !row[1] || row[1].trim() === '')) {
+        console.log('Seeding Alegria using fallback mock data...');
+        for (const official of ALEGRIA_OFFICIALS) {
+          await seedOfficial(official);
+        }
+        continue;
       }
-      continue;
-    }
 
-    // Punong Barangay
-    if (row[1] && row[1].trim() && row[1].trim().toUpperCase() !== 'VACANT') {
-      await seedOfficial({
-        name: row[1].trim(),
-        position: 'Barangay Captain',
-        type: 'BARANGAY',
-        hierarchyOrder: 1,
-        barangayName
-      });
-    }
+      if (isPilipog && (row.length <= 1 || !row[1] || row[1].trim() === '')) {
+        console.log('Seeding Pilipog using fallback mock data...');
+        for (const official of PILIPOG_OFFICIALS) {
+          await seedOfficial(official);
+        }
+        continue;
+      }
 
-    // Barangay Kagawads (Col 2 to 8)
-    for (let col = 2; col <= 8; col++) {
-      const val = row[col];
-      if (val && val.trim() && val.trim().toUpperCase() !== 'VACANT') {
+      // Punong Barangay
+      if (row[1] && row[1].trim() && row[1].trim().toUpperCase() !== 'VACANT') {
         await seedOfficial({
-          name: val.trim(),
-          position: `Barangay Kagawad ${col - 1}`,
+          name: row[1].trim(),
+          position: 'Barangay Captain',
           type: 'BARANGAY',
-          hierarchyOrder: col,
+          hierarchyOrder: 1,
           barangayName
         });
       }
-    }
 
-    // Barangay Secretary (Col 9)
-    if (row[9] && row[9].trim() && row[9].trim().toUpperCase() !== 'VACANT') {
-      await seedOfficial({
-        name: row[9].trim(),
-        position: 'Barangay Secretary',
-        type: 'BARANGAY',
-        hierarchyOrder: 9,
-        barangayName
-      });
-    }
+      // Barangay Kagawads (Col 2 to 8)
+      for (let col = 2; col <= 8; col++) {
+        const val = row[col];
+        if (val && val.trim() && val.trim().toUpperCase() !== 'VACANT') {
+          await seedOfficial({
+            name: val.trim(),
+            position: `Barangay Kagawad ${col - 1}`,
+            type: 'BARANGAY',
+            hierarchyOrder: col,
+            barangayName
+          });
+        }
+      }
 
-    // Barangay Treasurer (Col 10)
-    if (row[10] && row[10].trim() && row[10].trim().toUpperCase() !== 'VACANT') {
-      await seedOfficial({
-        name: row[10].trim(),
-        position: 'Barangay Treasurer',
-        type: 'BARANGAY',
-        hierarchyOrder: 10,
-        barangayName
-      });
-    }
-
-    // SK Chairperson (Col 11)
-    if (row[11] && row[11].trim() && row[11].trim().toUpperCase() !== 'VACANT') {
-      await seedOfficial({
-        name: row[11].trim(),
-        position: 'SK Chairperson',
-        type: 'SK',
-        hierarchyOrder: 1,
-        barangayName
-      });
-    }
-
-    // SK Kagawads (Col 12 to 18)
-    for (let col = 12; col <= 18; col++) {
-      const val = row[col];
-      if (val && val.trim() && val.trim().toUpperCase() !== 'VACANT') {
+      // Barangay Secretary (Col 9)
+      if (row[9] && row[9].trim() && row[9].trim().toUpperCase() !== 'VACANT') {
         await seedOfficial({
-          name: val.trim(),
-          position: `SK Kagawad ${col - 11}`,
+          name: row[9].trim(),
+          position: 'Barangay Secretary',
+          type: 'BARANGAY',
+          hierarchyOrder: 9,
+          barangayName
+        });
+      }
+
+      // Barangay Treasurer (Col 10)
+      if (row[10] && row[10].trim() && row[10].trim().toUpperCase() !== 'VACANT') {
+        await seedOfficial({
+          name: row[10].trim(),
+          position: 'Barangay Treasurer',
+          type: 'BARANGAY',
+          hierarchyOrder: 10,
+          barangayName
+        });
+      }
+
+      // SK Chairperson (Col 11)
+      if (row[11] && row[11].trim() && row[11].trim().toUpperCase() !== 'VACANT') {
+        await seedOfficial({
+          name: row[11].trim(),
+          position: 'SK Chairperson',
           type: 'SK',
-          hierarchyOrder: col - 10,
+          hierarchyOrder: 1,
+          barangayName
+        });
+      }
+
+      // SK Kagawads (Col 12 to 18)
+      for (let col = 12; col <= 18; col++) {
+        const val = row[col];
+        if (val && val.trim() && val.trim().toUpperCase() !== 'VACANT') {
+          await seedOfficial({
+            name: val.trim(),
+            position: `SK Kagawad ${col - 11}`,
+            type: 'SK',
+            hierarchyOrder: col - 10,
+            barangayName
+          });
+        }
+      }
+
+      // SK Secretary (Col 19)
+      if (row[19] && row[19].trim() && row[19].trim().toUpperCase() !== 'VACANT') {
+        await seedOfficial({
+          name: row[19].trim(),
+          position: 'SK Secretary',
+          type: 'SK',
+          hierarchyOrder: 9,
+          barangayName
+        });
+      }
+
+      // SK Treasurer (Col 20)
+      if (row[20] && row[20].trim() && row[20].trim().toUpperCase() !== 'VACANT') {
+        await seedOfficial({
+          name: row[20].trim(),
+          position: 'SK Treasurer',
+          type: 'SK',
+          hierarchyOrder: 10,
           barangayName
         });
       }
     }
-
-    // SK Secretary (Col 19)
-    if (row[19] && row[19].trim() && row[19].trim().toUpperCase() !== 'VACANT') {
-      await seedOfficial({
-        name: row[19].trim(),
-        position: 'SK Secretary',
-        type: 'SK',
-        hierarchyOrder: 9,
-        barangayName
-      });
-    }
-
-    // SK Treasurer (Col 20)
-    if (row[20] && row[20].trim() && row[20].trim().toUpperCase() !== 'VACANT') {
-      await seedOfficial({
-        name: row[20].trim(),
-        position: 'SK Treasurer',
-        type: 'SK',
-        hierarchyOrder: 10,
-        barangayName
-      });
-    }
+  } catch (err) {
+    console.warn('Warning: Could not parse Barangay Officials Excel sheet. Skipping. Error:', (err as Error).message);
   }
 
-  // B. Parse Word Doc for Municipal and Department Officials
-  const docxPath = path.join(__dirname, '../../LIST-Department-Head-Per-Office.docx');
-  const wordResult = await mammoth.convertToHtml({ path: docxPath });
-  const html = wordResult.value;
-
-  const trRegex = /<tr>([\s\S]*?)<\/tr>/g;
-  const tdRegex = /<td>([\s\S]*?)<\/td>/g;
-  let trMatch;
-  let deptHeadCount = 0;
-
-  while ((trMatch = trRegex.exec(html)) !== null) {
-    const trContent = trMatch[1];
-    const tds: string[] = [];
-    let tdMatch;
-
-    while ((tdMatch = tdRegex.exec(trContent)) !== null) {
-      const text = tdMatch[1].replace(/<\/?[^>]+(>|$)/g, "").replace(/&nbsp;/g, " ").trim();
-      tds.push(text);
+  // B. Seed Department Officials from PDF
+  console.log('Seeding Department Officials...');
+  // Clear existing DEPARTMENT officials to ensure fresh seed matches the PDF exactly
+  await prisma.official.deleteMany({
+    where: {
+      type: 'DEPARTMENT'
     }
+  });
 
-    if (tds.length >= 3) {
-      const dept = tds[0];
-      const name = tds[1];
-      const designation = tds[2];
-
-      // Skip table header row
-      if (name.toLowerCase() === 'head officer' || dept.toLowerCase() === 'department') {
-        continue;
-      }
-
-      if (!name || name.toUpperCase() === 'VACANT') {
-        continue;
-      }
-
-      deptHeadCount++;
-
-      let type = 'DEPARTMENT';
-      let hierarchyOrder = deptHeadCount + 2; // Position department heads after Mayor & Vice Mayor
-      let imageUrl = null;
-
-      if (designation.toLowerCase().includes('municipal mayor')) {
-        type = 'MUNICIPAL';
-        hierarchyOrder = 1;
-        imageUrl = 'https://cordova.gov.ph/wp-content/uploads/2023/04/MAYOR-SUAN.jpg';
-      } else if (designation.toLowerCase().includes('municipal vice-mayor') || designation.toLowerCase().includes('municipal vice mayor')) {
-        type = 'MUNICIPAL';
-        hierarchyOrder = 2;
-        imageUrl = 'https://cordova.gov.ph/wp-content/uploads/2023/04/VM-TAGO.jpg';
-      }
-
-      await seedOfficial({
-        name,
-        position: designation,
-        type,
-        hierarchyOrder,
-        imageUrl
-      });
-    }
+  for (const official of DEPARTMENT_OFFICIALS) {
+    await seedOfficial(official);
   }
 
   // C. Seed Extra Municipal Officials (Sangguniang Bayan)
