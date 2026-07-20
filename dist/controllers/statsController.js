@@ -8,17 +8,16 @@ const database_1 = __importDefault(require("../config/database"));
 const getAdminStats = async (req, res) => {
     try {
         // Run counts in parallel
-        const [totalUsers, verificationRequests, publishedPosts, serviceRequests] = await Promise.all([
+        const [totalUsers, verificationRequests, publishedPosts] = await Promise.all([
             database_1.default.user.count(),
             database_1.default.user.count({ where: { isVerified: false } }),
-            database_1.default.post.count({ where: { status: 'published' } }),
-            database_1.default.serviceRequest.count()
+            database_1.default.post.count({ where: { status: 'published' } })
         ]);
         res.json({
             totalUsers,
             verificationRequests,
             publishedPosts,
-            serviceRequests
+            serviceRequests: 0
         });
     }
     catch (error) {

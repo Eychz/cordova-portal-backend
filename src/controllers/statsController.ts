@@ -7,20 +7,18 @@ export const getAdminStats = async (req: Request, res: Response) => {
     const [
       totalUsers,
       verificationRequests,
-      publishedPosts,
-      serviceRequests
+      publishedPosts
     ] = await Promise.all([
       prisma.user.count(),
       prisma.user.count({ where: { isVerified: false } }),
-      prisma.post.count({ where: { status: 'published' } }),
-      prisma.serviceRequest.count()
+      prisma.post.count({ where: { status: 'published' } })
     ]);
 
     res.json({
       totalUsers,
       verificationRequests,
       publishedPosts,
-      serviceRequests
+      serviceRequests: 0
     });
   } catch (error: any) {
     console.error('Error fetching admin stats:', error);

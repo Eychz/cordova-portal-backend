@@ -24,9 +24,12 @@ const service_1 = __importDefault(require("./routes/service"));
 const official_1 = __importDefault(require("./routes/official"));
 const emergency_1 = __importDefault(require("./routes/emergency"));
 const changeLog_1 = __importDefault(require("./routes/changeLog"));
+const rateLimiter_1 = require("./middleware/rateLimiter");
 const app = (0, express_1.default)();
 const server = http_1.default.createServer(app);
 const PORT = process.env.PORT || 5000;
+// Trust proxy for rate limiting behind reverse proxies (e.g. Nginx, Vercel, Render)
+app.set('trust proxy', 1);
 // CORS Configuration for production
 const allowedOrigins = [
     'http://localhost:3000',
@@ -60,15 +63,17 @@ app.use((0, cors_1.default)({
 }));
 app.use(express_1.default.json({ limit: '10mb' }));
 app.use(express_1.default.urlencoded({ extended: true, limit: '10mb' }));
+// Global Rate Limiter for all /api endpoints
+app.use('/api', rateLimiter_1.globalLimiter);
+// Specific Tiered Rate Limiters
+app.use('/api/auth', rateLimiter_1.authLimiter, auth_1.default);
+app.use('/api/upload', rateLimiter_1.uploadLimiter, upload_1.default);
 // Routes
-app.use('/api/auth', auth_1.default);
 app.use('/api/users', user_1.default);
 app.use('/api/posts', post_1.default);
 app.use('/api/stats', stats_1.default);
-app.use('/api/upload', upload_1.default);
 app.use('/api/admin-activities', adminActivity_1.default);
 app.use('/api/services', service_1.default);
-// app.use('/api/service-requests', serviceRequestRoutes);
 app.use('/api/officials', official_1.default);
 app.use('/api/emergency', emergency_1.default);
 app.use('/api/change-logs', changeLog_1.default);

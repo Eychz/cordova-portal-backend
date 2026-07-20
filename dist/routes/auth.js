@@ -39,11 +39,6 @@ const auth_1 = require("../middleware/auth");
 const recaptcha_1 = require("../middleware/recaptcha");
 const router = (0, express_1.Router)();
 // Auth routes
-router.post('/register', recaptcha_1.verifyReCaptcha, authController.register);
-router.post('/verify-email', authController.verifyEmail);
-router.post('/resend-verification', authController.resendVerification);
 router.post('/login', recaptcha_1.verifyReCaptcha, authController.login);
-router.post('/forgot-password', recaptcha_1.verifyReCaptcha, authController.forgotPassword);
-router.post('/reset-password', authController.resetPassword);
 router.get('/me', auth_1.authenticateToken, authController.getCurrentUser);
 exports.default = router;

@@ -33,62 +33,8 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getCurrentUser = exports.resetPassword = exports.forgotPassword = exports.login = exports.resendVerification = exports.verifyEmail = exports.register = void 0;
+exports.getCurrentUser = exports.login = void 0;
 const authService = __importStar(require("../services/authService"));
-const register = async (req, res) => {
-    try {
-        const { email, password, firstName, middleName, lastName, barangay, contactNumber } = req.body;
-        if (!email || !password) {
-            return res.status(400).json({ error: 'Email and password are required' });
-        }
-        console.log('Register controller received:', { email, firstName, middleName, lastName, barangay, contactNumber });
-        const result = await authService.registerUser({
-            email,
-            password,
-            firstName,
-            middleName,
-            lastName,
-            barangay,
-            contactNumber
-        });
-        res.status(201).json(result);
-    }
-    catch (error) {
-        console.error('Registration error:', error);
-        res.status(error.statusCode || 500).json({ error: error.message || 'Registration failed' });
-    }
-};
-exports.register = register;
-const verifyEmail = async (req, res) => {
-    try {
-        const { userId, code } = req.body;
-        if (!userId || !code) {
-            return res.status(400).json({ error: 'User ID and code are required' });
-        }
-        const result = await authService.verifyUserEmail(parseInt(userId), code);
-        res.json(result);
-    }
-    catch (error) {
-        console.error('Verification error:', error);
-        res.status(error.statusCode || 500).json({ error: error.message || 'Verification failed' });
-    }
-};
-exports.verifyEmail = verifyEmail;
-const resendVerification = async (req, res) => {
-    try {
-        const { email } = req.body;
-        if (!email) {
-            return res.status(400).json({ error: 'Email is required' });
-        }
-        const result = await authService.resendVerificationCode(email);
-        res.json(result);
-    }
-    catch (error) {
-        console.error('Resend verification error:', error);
-        res.status(error.statusCode || 500).json({ error: error.message || 'Failed to resend verification code' });
-    }
-};
-exports.resendVerification = resendVerification;
 const login = async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -100,48 +46,10 @@ const login = async (req, res) => {
     }
     catch (error) {
         console.error('Login error:', error);
-        // If email is not verified, return userId along with error
-        if (error.requiresVerification) {
-            return res.status(error.statusCode || 403).json({
-                error: error.message || 'Login failed',
-                requiresVerification: true,
-                userId: error.userId
-            });
-        }
         res.status(error.statusCode || 500).json({ error: error.message || 'Login failed' });
     }
 };
 exports.login = login;
-const forgotPassword = async (req, res) => {
-    try {
-        const { email } = req.body;
-        if (!email) {
-            return res.status(400).json({ error: 'Email is required' });
-        }
-        const result = await authService.requestPasswordReset(email);
-        res.json(result);
-    }
-    catch (error) {
-        console.error('Forgot password error:', error);
-        res.status(500).json({ error: 'Request failed' });
-    }
-};
-exports.forgotPassword = forgotPassword;
-const resetPassword = async (req, res) => {
-    try {
-        const { email, code, newPassword } = req.body;
-        if (!email || !code || !newPassword) {
-            return res.status(400).json({ error: 'Email, code, and new password are required' });
-        }
-        const result = await authService.resetUserPassword(email, code, newPassword);
-        res.json(result);
-    }
-    catch (error) {
-        console.error('Reset password error:', error);
-        res.status(error.statusCode || 500).json({ error: error.message || 'Password reset failed' });
-    }
-};
-exports.resetPassword = resetPassword;
 const getCurrentUser = async (req, res) => {
     try {
         // User object is attached by authenticateToken middleware
