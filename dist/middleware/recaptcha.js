@@ -5,18 +5,18 @@ const verifyReCaptcha = async (req, res, next) => {
     try {
         const token = req.headers['x-recaptcha-token'];
         const secretKey = process.env.RECAPTCHA_SECRET_KEY;
+        if (process.env.SKIP_RECAPTCHA === 'true') {
+            console.warn('reCAPTCHA check explicitly bypassed via SKIP_RECAPTCHA=true env variable.');
+            return next();
+        }
         // Allow bypassing reCAPTCHA check if keys are completely missing in non-production.
         // This facilitates running tests or local development easily.
         if (!secretKey) {
             if (process.env.NODE_ENV === 'production') {
                 console.error('CRITICAL: reCAPTCHA Secret Key is missing in production environment variables.');
-                return res.status(500).json({ error: 'Security system configuration error.' });
+                return res.status(500).json({ error: 'Security system configuration error: RECAPTCHA_SECRET_KEY is missing.' });
             }
             console.warn('reCAPTCHA Secret Key is missing. Bypassing check in development.');
-            return next();
-        }
-        if (process.env.SKIP_RECAPTCHA === 'true') {
-            console.warn('reCAPTCHA check explicitly bypassed via SKIP_RECAPTCHA=true env variable.');
             return next();
         }
         if (!token) {
