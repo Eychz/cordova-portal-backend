@@ -1,16 +1,23 @@
 import Redis from 'ioredis';
 
-const REDIS_URL = process.env.REDIS_URL;
+let cleanRedisUrl = process.env.REDIS_URL
+  ? process.env.REDIS_URL.trim().replace(/^["']|["']$/g, '')
+  : undefined;
+
+// Auto-upgrade Upstash URLs from redis:// to rediss:// for SSL/TLS requirement
+if (cleanRedisUrl && cleanRedisUrl.includes('upstash.io') && cleanRedisUrl.startsWith('redis://')) {
+  cleanRedisUrl = cleanRedisUrl.replace('redis://', 'rediss://');
+}
 
 let redis: Redis | null = null;
 let isRedisAvailable = false;
 
-if (REDIS_URL && REDIS_URL !== 'false' && REDIS_URL !== 'none') {
+if (cleanRedisUrl && cleanRedisUrl !== 'false' && cleanRedisUrl !== 'none') {
   try {
-    redis = new Redis(REDIS_URL, {
+    const redisOptions: any = {
       maxRetriesPerRequest: 1,
       enableOfflineQueue: false,
-      retryStrategy(times) {
+      retryStrategy(times: number) {
         // Limit retries to prevent request hanging when Redis is offline
         if (times > 2) {
           isRedisAvailable = false;
@@ -19,7 +26,14 @@ if (REDIS_URL && REDIS_URL !== 'false' && REDIS_URL !== 'none') {
         }
         return 1000; // Retry after 1 second
       }
-    });
+    };
+
+    // Upstash & Cloud Redis requires TLS when using rediss://
+    if (cleanRedisUrl.startsWith('rediss://')) {
+      redisOptions.tls = { rejectUnauthorized: false };
+    }
+
+    redis = new Redis(cleanRedisUrl, redisOptions);
 
     redis.on('connect', () => {
       console.log(`[REDIS] Connecting to Redis...`);
