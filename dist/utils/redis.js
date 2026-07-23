@@ -5,40 +5,46 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.redisClient = void 0;
 const ioredis_1 = __importDefault(require("ioredis"));
-const REDIS_URL = process.env.REDIS_URL || 'redis://127.0.0.1:6379';
+const REDIS_URL = process.env.REDIS_URL;
 let redis = null;
 let isRedisAvailable = false;
-try {
-    redis = new ioredis_1.default(REDIS_URL, {
-        maxRetriesPerRequest: 1,
-        retryStrategy(times) {
-            // Limit retries to prevent request hanging when Redis is offline
-            if (times > 2) {
-                isRedisAvailable = false;
-                console.warn(`[REDIS] Connection failed after ${times} attempts. Disabling cache and falling back to database.`);
-                return null; // Stop retrying
+if (REDIS_URL && REDIS_URL !== 'false' && REDIS_URL !== 'none') {
+    try {
+        redis = new ioredis_1.default(REDIS_URL, {
+            maxRetriesPerRequest: 1,
+            enableOfflineQueue: false,
+            retryStrategy(times) {
+                // Limit retries to prevent request hanging when Redis is offline
+                if (times > 2) {
+                    isRedisAvailable = false;
+                    console.warn(`[REDIS] Connection failed after ${times} attempts. Disabling cache and falling back to database.`);
+                    return null; // Stop retrying
+                }
+                return 1000; // Retry after 1 second
             }
-            return 1000; // Retry after 1 second
-        }
-    });
-    redis.on('connect', () => {
-        console.log(`[REDIS] Connecting to Redis at ${REDIS_URL}...`);
-    });
-    redis.on('ready', () => {
-        isRedisAvailable = true;
-        console.log('[REDIS] 🟢 Redis Client Ready');
-    });
-    redis.on('error', (err) => {
-        isRedisAvailable = false;
-        console.error('[REDIS] 🔴 Redis Client Connection Error:', err.message);
-    });
-    redis.on('close', () => {
-        isRedisAvailable = false;
-        console.log('[REDIS] Redis Connection Closed');
-    });
+        });
+        redis.on('connect', () => {
+            console.log(`[REDIS] Connecting to Redis...`);
+        });
+        redis.on('ready', () => {
+            isRedisAvailable = true;
+            console.log('[REDIS] 🟢 Redis Client Ready');
+        });
+        redis.on('error', (err) => {
+            isRedisAvailable = false;
+            console.error('[REDIS] 🔴 Redis Client Connection Error:', err.message);
+        });
+        redis.on('close', () => {
+            isRedisAvailable = false;
+            console.log('[REDIS] Redis Connection Closed');
+        });
+    }
+    catch (error) {
+        console.error('[REDIS] 🔴 Failed to initialize Redis Client:', error.message);
+    }
 }
-catch (error) {
-    console.error('[REDIS] 🔴 Failed to initialize Redis Client:', error.message);
+else {
+    console.log('[REDIS] ℹ️ REDIS_URL environment variable is not configured. Cache disabled (falling back to database).');
 }
 exports.redisClient = {
     async get(key) {
