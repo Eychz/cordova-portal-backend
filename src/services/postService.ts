@@ -58,7 +58,7 @@ export const postService = {
             }
         }
 
-        const parsedLimit = Math.min(limit, 30);
+        const parsedLimit = Math.min(Math.max(1, limit), 100);
         const skip = (page - 1) * parsedLimit;
 
         const [posts, total] = await Promise.all([

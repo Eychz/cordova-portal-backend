@@ -11,7 +11,7 @@ exports.postController = {
         try {
             const { type, status, page, limit, search, date, category } = req.query;
             const parsedPage = parseInt(page) || 1;
-            const parsedLimit = parseInt(limit) || 30;
+            const parsedLimit = parseInt(limit) || 20;
             const cleanString = (val) => {
                 if (typeof val !== 'string')
                     return undefined;
